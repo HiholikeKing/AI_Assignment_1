@@ -80,11 +80,13 @@ def visualize_route(places, route):
 #and its total distance, and visualizes the route using the visualize_route() function.
 places = {'Dorado Park': (0, 0), 'Khomasdal': (3, 1), 'Katutura': (1, 3), 'Eros': (4, 3), 'Klein Windhoek': (2, 0)}
 distances = {
+
     'Dorado Park': {'Dorado Park': 0, 'Khomasdal': 7, 'Katutura': 20, 'Eros': 15, 'Klein Windhoek': 12},
     'Khomasdal': {'Dorado Park': 10, 'Khomasdal': 0, 'Katutura': 6, 'Eros': 14, 'Klein Windhoek': 18},
     'Katutura': {'Dorado Park': 20, 'Khomasdal': 6, 'Katutura': 0, 'Eros': 15, 'Klein Windhoek': 30},
     'Eros': {'Dorado Park': 15, 'Khomasdal': 14, 'Katutura': 25, 'Eros': 0, 'Klein Windhoek': 2},
     'Klein Windhoek': {'Dorado Park': 12, 'Khomasdal': 18, 'Katutura': 30, 'Eros': 2, 'Klein Windhoek': 0}
+    
 }
 
 tsp_solver = TSPSolver(places.keys(), distances)
