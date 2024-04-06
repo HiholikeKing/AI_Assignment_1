@@ -7,6 +7,7 @@ class GridWorld:
         self.obstacles = obstacles
 
     def is_valid_move(self, x, y):
+        return 0 <= x < self.width and 0 <= y < self.height and (x, y) not in self.obstacles
 
     def get_neighbors(self, x, y):
         neighbors = [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]  # Right, Left, Down, Up
