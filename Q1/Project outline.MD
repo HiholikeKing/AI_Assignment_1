@@ -60,10 +60,10 @@
         - Use the precomputed distance from the robot's current cell to the target as the heuristic value.
         - This penalizes paths with extensive obstacle detours.
 - Constraints
-    1. Obstacles [`1`] must be Avoided (you cannot go to it)
+    1. Obstacles [`1`] must be Avoided (you cannot go to it or through it)
     2. the Free terrain [`0`] & [`2`] should ways be cleaned first before reaching the goal.
     3. choose a path that is more energy efficient to turns ,the fewer turns the bet
-    4. cannot clean where its been cleaned before
+    4. cannot clean where its been cleaned before thus to avoid repetition.
 
 ### Things To Be Done
 
