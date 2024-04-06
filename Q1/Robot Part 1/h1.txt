@@ -1,0 +1,4 @@
+FFFA ###
+FFCC FFF
+FFCCFFFF
+B   FFFF
