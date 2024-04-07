@@ -8,18 +8,12 @@ class Robot():
         with open(filename) as f:
             contents = f.read()
 
-        if contents.count("A") != 1:
-            raise Exception("maze must have exactly one start point")
-        if contents.count("B") != 1:
-            raise Exception("maze must have exactly one goal")
-
         contents = contents.splitlines()
         self.height = len(contents)                        
         self.width = max(len(line) for line in contents)   
 
         self.walls = []
-        self.carpets = []
-        self.furniture = []
+        self.dirt = []
         for i in range(self.height):
             row = []
             for j in range(self.width):
@@ -27,15 +21,13 @@ class Robot():
                     if contents[i][j] == "A":
                         self.start = (i, j)                 
                         row.append("A")                   
-                    elif contents[i][j] == "B":
-                        self.goal = (i, j)                  
-                        row.append("B")
-                    elif contents[i][j] == "C":
-                        self.carpets.append((i, j))                  
-                        row.append("C")
-                    elif contents[i][j] == "F":
-                        self.furniture.append((i, j))                 
-                        row.append("F")                   
+                    elif contents[i][j] == "#":  
+                        row.append("#")                 
+                    elif contents[i][j] == "X":                   
+                        row.append("X")
+                    elif contents[i][j] == "+": 
+                        row.append("+")
+                        self.dirt.append((i, j))                                           
                     elif contents[i][j] == " ":
                         row.append(" ")                  
                     else:
@@ -45,6 +37,7 @@ class Robot():
             self.walls.append(row)
 
         self.solution = None                                
+        self.total_cost = 0                                 
 
     def print(self):
         solution = self.solution[1] if self.solution is not None else None
@@ -55,12 +48,12 @@ class Robot():
                     print("█", end="")                    
                 elif (i, j) == self.start:
                     print("A", end="")                    
-                elif (i, j) == self.goal:
-                    print("B", end="")
-                elif col == "F":
-                    print("F", end="")                 
-                elif col == "C":
-                    print("C", end="")
+                elif col == "X":  
+                    print("X", end="")
+                elif col == "+":  
+                    print("+", end="")                 
+                elif col == " ":  
+                    print(" ", end="")                 
                 elif solution is not None and (i, j) in solution:
                     print("*", end="")                    
                 else:
@@ -69,7 +62,9 @@ class Robot():
         print()
 
     def heuristic(self, state):
-        return abs(state[0] - self.goal[0]) + abs(state[1] - self.goal[1])  
+        # Calculate the Manhattan distance between the current state and the nearest dirt location
+        distances = [abs(state[0] - dirt[0]) + abs(state[1] - dirt[1]) for dirt in self.dirt]
+        return min(distances, default=0)
 
     def neighbors(self, state):
         row, col = state
@@ -77,11 +72,13 @@ class Robot():
 
         result = []
         for action, (r, c) in candidates:
-            if 0 <= r < self.height and 0 <= c < self.width:  # Check if (r, c) is within grid bounds
-                if self.walls[r][c] not in ("#", "F"):  # Check if the cell is not a wall or furniture
+            if 0 <= r < self.height and 0 <= c < self.width:
+                if self.walls[r][c] != "#":
                     cost = 1
-                    if self.walls[r][c] == "C":
-                        cost = 2  
+                    if (r, c) in self.dirt:
+                        cost = 3  # Increase cost for cleaning dirt
+                    elif self.walls[r][c] == "X":  
+                        cost = 5  # Increase cost for obstacles
                     result.append((action, (r, c), cost))
         return result
 
@@ -90,7 +87,8 @@ class Robot():
         frontier = pq.PriorityQueueFrontier()                  
         frontier.add(start_node)
         self.explored = set()                              
-        self.num_explored = 0                              
+        self.num_explored = 0   
+        remaining_dirt = set(self.dirt)                           
 
         while True:
             if frontier.empty():
@@ -99,17 +97,22 @@ class Robot():
             current_node = frontier.remove()
             self.num_explored += 1
 
-            if current_node.state == self.goal:
-                actions = []
-                cells = []
-                while current_node.parent is not None:
-                    actions.append(current_node.action)
-                    cells.append(current_node.state)
-                    current_node = current_node.parent
-                actions.reverse()
-                cells.reverse()
-                self.solution = (actions, cells)
-                return
+            if current_node.state in remaining_dirt:
+                remaining_dirt.remove(current_node.state)
+                if not remaining_dirt:
+                    actions = []
+                    cells = []
+                    total_cost = 0
+                    while current_node.parent is not None:
+                        actions.append(current_node.action)
+                        cells.append(current_node.state)
+                        total_cost += current_node.cost
+                        current_node = current_node.parent
+                    actions.reverse()
+                    cells.reverse()
+                    self.solution = (actions, cells)
+                    self.total_cost = total_cost
+                    return
 
             self.explored.add(current_node.state)
 
@@ -122,7 +125,7 @@ class Robot():
                     frontier.add(next_node)
 
     def output_image(self, filename, show_solution=True, show_explored=False):
-        cell_size = 50
+        cell_size = 30
         cell_border = 2
 
         img = Image.new(
@@ -133,21 +136,22 @@ class Robot():
         draw = ImageDraw.Draw(img)
 
         solution = self.solution[1] if self.solution is not None else None
+        explored_dict = {state: index for index, state in enumerate(self.explored)}
+        
         for i, row in enumerate(self.walls):
             for j, col in enumerate(row):
                 if col == "#":
                     fill = (40, 40, 40)  # Dark gray for walls
                 elif (i, j) == self.start:
                     fill = (255, 0, 0)  # Red for start
-                elif (i, j) == self.goal:
-                    fill = (0, 171, 28)  # Green for goal
+                elif show_explored and (i, j) in self.explored and self.walls[i][j] == "+":
+                    fill = (255, 165, 0)  # Orange for explored cells containing "+"
+                    draw.text((j * cell_size + 5, i * cell_size + 5), str(explored_dict[(i, j)]), fill="black")  # Add number to explored cells
                 elif solution is not None and show_solution and (i, j) in solution:
                     fill = (220, 235, 113)  # Light yellow for solution path
                 elif solution is not None and show_explored and (i, j) in self.explored:
                     fill = (212, 97, 85)  # Light red for explored but not in solution path
-                elif col == "F":
-                    fill = (0, 0, 255)  # Blue for furniture
-                elif col == "C":
+                elif col == "X":  
                     fill = (128, 0, 128)  # Purple for carpet
                 else:
                     fill = (237, 240, 252)  # Default light gray for empty space
@@ -165,12 +169,8 @@ if len(sys.argv) != 2:
     sys.exit("Usage: python maze.py maze.txt")
 
 r = Robot(sys.argv[1])
-print("Maze:")
-r.print()
-print("Solving...")
 r.solve()
 print("States Explored:", r.num_explored)
-print("Solution:")
-r.print()
+print("Total Cost:", r.total_cost)  # Print total cost
 r.output_image("maze.png", show_explored=True)
 
