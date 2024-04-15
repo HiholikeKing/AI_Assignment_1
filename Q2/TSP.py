@@ -10,7 +10,7 @@ class TSPSolver:
         self.places = places
         self.distances = distances
 
- #This method calculates the total distance of a given route (visiting order) for all the places. 
+ #This method calculates the total distance of a given route (the visiting order) for all the places. 
 #It iterates over the given route and sums up the distances between consecutive cities, including the distance from the last city back to the starting city.   
     def calculate_total_distance(self, route):
         total_distance = 0
