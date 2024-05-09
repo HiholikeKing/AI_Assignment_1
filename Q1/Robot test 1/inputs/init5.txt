@@ -1,6 +1,0 @@
-xxxxxxxxxx
-x  11111 x
-x 11x1111x
-x111x1111x
-x c x1111x
-xxxxxxxxxx
