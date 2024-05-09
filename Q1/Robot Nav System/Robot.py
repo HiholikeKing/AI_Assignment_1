@@ -99,6 +99,7 @@ class Robot():
             self.num_explored += 1
 
             if current_node.state in remaining_dirt:
+
                 remaining_dirt.remove(current_node.state)
                 if not remaining_dirt:
                     actions = []
